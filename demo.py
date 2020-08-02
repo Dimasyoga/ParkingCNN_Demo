@@ -9,6 +9,7 @@ import json
 
 model_path = "./model.tflite"
 video_path = "./test.mp4"
+# video_path = "D:/TA/tugas-akhir-iot-parking-outdoor/M2u00002-1.m4v"
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
