@@ -13,6 +13,7 @@ import tflite_runtime.interpreter as tflite
 from Preprocessing.Preprocessing import Preprocessing
 import json
 import sys
+import time
 
 model_path = "./model.tflite"
 
@@ -79,27 +80,28 @@ timeout = aiohttp.ClientTimeout(total=1.5)
 
 async def get_response(url):
     async with aiohttp.ClientSession(timeout=timeout) as session:
-        try:
-            async with session.get(url+"/capture") as response:
-                # response.raise_for_status()
-                print(f"Response status ({url}): {response.status}")
-                image = np.asarray(bytearray(await response.read()), dtype="uint8")
-                image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+        # try:
+        #     async with session.get(url+"/capture") as response:
+        #         # response.raise_for_status()
+        #         # print(f"Response status ({url}): {response.status}")
+        #         image = np.asarray(bytearray(await response.read()), dtype="uint8")
+        #         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
             
-        except requests.exceptions.HTTPError as http_err:
-            print(f"HTTP error occurred: {http_err}")
-            image = np.zeros((1600, 1200, 3), dtype="uint8")
+        # except requests.exceptions.HTTPError as http_err:
+        #     # print(f"HTTP error occurred: {http_err}")
+        #     image = np.zeros((1600, 1200, 3), dtype="uint8")
         
-        except aiohttp.ClientConnectorError as e:
-            print('Connection Error', str(e))
-            image = np.zeros((1600, 1200, 3), dtype="uint8")
+        # except aiohttp.ClientConnectorError as e:
+        #     # print('Connection Error', str(e))
+        #     image = np.zeros((1600, 1200, 3), dtype="uint8")
             
-        except Exception as err:
-            print(f"An error ocurred: {err}")
-            # print(str((cam_addr_list[index]+"/capture")))
-            image = np.zeros((1600, 1200, 3), dtype="uint8")
+        # except Exception as err:
+        #     # print(f"An error ocurred: {err}")
+        #     # print(str((cam_addr_list[index]+"/capture")))
+        #     image = np.zeros((1600, 1200, 3), dtype="uint8")
         
-        # img_array[index] = image
+        image = np.zeros((1600, 1200, 3), dtype="uint8")
+        time.sleep(0.66)
 
         pre.setImage(image)
         crop = pre.getCrop()
@@ -216,7 +218,7 @@ def main():
     URL_PER_CORE = floor(NUM_URL / NUM_CORES)
     REMAINDER = NUM_URL % NUM_CORES
 
-    print("url count: {0} cpu count: {1} count {2} remainder {3}".format(NUM_URL, NUM_CORES, URL_PER_CORE, REMAINDER))
+    # print("url count: {0} cpu count: {1} count {2} remainder {3}".format(NUM_URL, NUM_CORES, URL_PER_CORE, REMAINDER))
 
     futures = [] # To store our futures
 
@@ -236,7 +238,7 @@ def main():
                 # print("j{0} : {1}".format(i, j))
                 indexs.append(j)
 
-            print("core {0} get {1} task from {2} to {3}".format(i, len(indexs), start, stop))
+            # print("core {0} get {1} task from {2} to {3}".format(i, len(indexs), start, stop))
             
             new_future = executor.submit(
                 start_request, # Function to perform
@@ -246,7 +248,7 @@ def main():
             futures.append(new_future)
 
     concurrent.futures.wait(futures)
-    print(futures[0].result())
+    # print(futures[0].result())
     print(len(futures))
 
 if __name__ == "__main__":
