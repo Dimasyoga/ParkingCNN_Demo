@@ -64,6 +64,9 @@ cam_addr_list = ["http://192.168.88.133", "http://192.168.88.246",
                 "http://192.168.88.33", "http://192.168.88.24",
                 "http://192.168.88.3", "http://192.168.88.22",
                 "http://192.168.88.23", "http://192.168.88.2",
+                "http://192.168.88.43", "http://192.168.88.16",
+                "http://192.168.88.11", "http://192.168.88.26",
+                "http://192.168.88.33", "http://192.168.88.24",
                 "http://192.168.88.23", "http://192.168.88.2",
                 "http://192.168.88.136", "http://192.168.88.228",
                 "http://192.168.88.2",]
@@ -101,7 +104,6 @@ async def get_response(url):
         pre.setImage(image)
         crop = pre.getCrop()
 
-        
         for frame in crop:
             frame = cv2.resize(frame, (input_shape[1], input_shape[2]), interpolation = cv2.INTER_CUBIC)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -171,47 +173,85 @@ def start_request(indexs):
 #         start_request(i)
 
 def main():
-    NUM_CORES = cpu_count()-1 # Our number of CPU cores (including logical cores)
+    # NUM_CORES = cpu_count()-1 # Our number of CPU cores (including logical cores)
+    # NUM_URL = len(cam_addr_list)
+    # print("url count: {0} cpu count: {1}".format(NUM_URL, NUM_CORES))
+    # URL_PER_CORE = floor(NUM_URL / NUM_CORES)
+
+    # futures = [] # To store our futures
+
+    # with concurrent.futures.ProcessPoolExecutor(cpu_count()) as executor:
+    #     for i in range(NUM_CORES):
+    #         indexs = []
+    #         for j in range(URL_PER_CORE*i, URL_PER_CORE*(i+1)):
+    #             print("j{0} : {1}".format(i, j))
+    #             indexs.append(j)
+
+    #         new_future = executor.submit(
+    #             start_request, # Function to perform
+    #             # v Arguments v
+    #             indexs
+    #         )
+    #         futures.append(new_future)
+        
+    #     indexs = []
+    #     for j in range(URL_PER_CORE*NUM_CORES, NUM_URL):
+    #         print("j{0} : {1}".format(NUM_CORES, j))
+    #         indexs.append(j)
+
+    #     if (NUM_URL%NUM_CORES != 0):
+    #         futures.append(
+    #             executor.submit(
+    #                 start_request,
+    #                 indexs
+    #             )
+    #         )
+
+    # concurrent.futures.wait(futures)
+    # print(futures[0].result())
+    # print(len(futures))
+
+    NUM_CORES = cpu_count() # Our number of CPU cores (including logical cores)
     NUM_URL = len(cam_addr_list)
-    print("url count: {0} cpu count: {1}".format(NUM_URL, NUM_CORES))
     URL_PER_CORE = floor(NUM_URL / NUM_CORES)
+    REMAINDER = NUM_URL % NUM_CORES
+
+    print("url count: {0} cpu count: {1} count {2} remainder {3}".format(NUM_URL, NUM_CORES, URL_PER_CORE, REMAINDER))
 
     futures = [] # To store our futures
 
-    with concurrent.futures.ProcessPoolExecutor(cpu_count()) as executor:
+    with concurrent.futures.ProcessPoolExecutor(NUM_CORES) as executor:
         for i in range(NUM_CORES):
             indexs = []
-            for j in range(URL_PER_CORE*i, URL_PER_CORE*(i+1)):
-                print("j{0} : {1}".format(i, j))
+            if (i < REMAINDER):
+                start = i * (URL_PER_CORE + 1)
+                stop = start + (URL_PER_CORE + 1)
+                
+            else:
+                start = (i * URL_PER_CORE) + REMAINDER
+                stop = start + URL_PER_CORE
+
+
+            for j in range(start, stop):
+                # print("j{0} : {1}".format(i, j))
                 indexs.append(j)
 
+            print("core {0} get {1} task from {2} to {3}".format(i, len(indexs), start, stop))
+            
             new_future = executor.submit(
                 start_request, # Function to perform
                 # v Arguments v
                 indexs
             )
             futures.append(new_future)
-        
-        indexs = []
-        for j in range(URL_PER_CORE*NUM_CORES, NUM_URL):
-            print("j{0} : {1}".format(NUM_CORES, j))
-            indexs.append(j)
-
-        if (NUM_URL%NUM_CORES != 0):
-            futures.append(
-                executor.submit(
-                    start_request,
-                    indexs
-                )
-            )
 
     concurrent.futures.wait(futures)
     print(futures[0].result())
     print(len(futures))
 
 if __name__ == "__main__":
-    # print(timeit.timeit(main, number=10))
-    main()
+    print(timeit.timeit(main, number=10))
+    # main()
     # print(img_array)
     # for i,img in enumerate(img_array):
     #     cv2.imshow(str(i), img)
